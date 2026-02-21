@@ -90,7 +90,8 @@ async function main() {
   });
 
   // ── Animate loop ──────────────────────────────────────────────────────────
-const MAX_DELTA_MS = 50; // cap to prevent spiral of death
+  const MAX_DELTA_MS = 50; // cap to prevent spiral of death
+  let prevTime = performance.now();
 
   function animate() {
     requestAnimationFrame(animate);
