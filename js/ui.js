@@ -3,6 +3,9 @@
 const SUIT_SYMBOLS = { s: '♠', h: '♥', d: '♦', c: '♣' };
 const SUIT_COLORS  = { s: 'black', h: 'red', d: 'red', c: 'black' };
 
+const DRAG_THRESHOLD_PX      = 10;  // pixels of movement before touch drag activates
+const CIRCLE_PULSE_DURATION  = 420; // ms — must match .circle-pulse animation in CSS
+
 let game = null;
 let selectedChip = 5;
 let anteAmount = 5;
@@ -16,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupChipButtons();
   setupActionButtons();
   setupModals();
+  setupDragDrop();
   updateBetDisplays();
   updateStackDisplay();
   showPhase('betting');
@@ -55,6 +59,13 @@ function updateBetDisplays() {
   document.getElementById('blind-display').textContent = '$' + anteAmount;
   document.getElementById('trips-display').textContent = tripsAmount > 0 ? '$' + tripsAmount : '-';
   document.getElementById('total-display').textContent = '$' + (anteAmount * 2 + tripsAmount);
+
+  // Preview pending bets on the circles during the betting phase
+  if (game && game.betStage === 'idle') {
+    document.querySelector('#circle-ante .circle-amount').textContent = '$' + anteAmount;
+    document.querySelector('#circle-blind .circle-amount').textContent = '$' + anteAmount;
+    document.querySelector('#circle-trips .circle-amount').textContent = tripsAmount > 0 ? '$' + tripsAmount : '';
+  }
 }
 
 // ─── Action Buttons ───────────────────────────────────────────────────────────
@@ -233,7 +244,7 @@ function renderShowdown(result) {
     for (let i = 0; i < 2; i++) area.appendChild(createCardBack(i * 80));
   } else {
     game.dealerCards.forEach((card, i) => {
-      const el = createCardElement(card, false, i * 80);
+      const el = createCardElement(card, false, i * 130, 'reveal');
       area.appendChild(el);
     });
   }
@@ -322,11 +333,11 @@ function hideResult() {
 
 // ─── Card Creation ────────────────────────────────────────────────────────────
 
-function createCardElement(card, faceDown, delay) {
+function createCardElement(card, faceDown, delay, animType) {
   const el = document.createElement('div');
   el.className = 'card ' + SUIT_COLORS[card.suit];
   el.style.animationDelay = (delay || 0) + 'ms';
-  el.classList.add('deal-anim');
+  el.classList.add(animType === 'reveal' ? 'reveal-anim' : 'deal-anim');
 
   const rankDisplay = card.rank === 'T' ? '10' : card.rank;
   const suitSym = SUIT_SYMBOLS[card.suit];
@@ -419,6 +430,142 @@ function showMessage(text, type) {
 
 function hideMessage() {
   document.getElementById('flash-message').classList.add('hidden');
+}
+
+// ─── Drag & Drop ──────────────────────────────────────────────────────────────
+
+function setupDragDrop() {
+  const chips = document.querySelectorAll('.chip[draggable]');
+  const dropTargets = document.querySelectorAll('.bet-circle[data-bet]');
+
+  // ── Desktop HTML5 Drag API ──────────────────────────────────────────────────
+  chips.forEach(chip => {
+    chip.addEventListener('dragstart', (e) => {
+      e.dataTransfer.effectAllowed = 'copy';
+      e.dataTransfer.setData('text/plain', chip.dataset.value);
+      setTimeout(() => chip.classList.add('dragging'), 0);
+    });
+    chip.addEventListener('dragend', () => {
+      chip.classList.remove('dragging');
+      dropTargets.forEach(t => t.classList.remove('drag-over'));
+    });
+  });
+
+  dropTargets.forEach(target => {
+    target.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      target.classList.add('drag-over');
+    });
+    target.addEventListener('dragleave', (e) => {
+      if (!target.contains(e.relatedTarget)) target.classList.remove('drag-over');
+    });
+    target.addEventListener('drop', (e) => {
+      e.preventDefault();
+      target.classList.remove('drag-over');
+      const value = parseInt(e.dataTransfer.getData('text/plain'), 10);
+      if (value && target.dataset.bet) applyChipToBet(target.dataset.bet, value);
+    });
+  });
+
+  // ── Mobile Touch Drag ───────────────────────────────────────────────────────
+  let touch = null;
+
+  chips.forEach(chip => {
+    chip.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      touch = {
+        chip,
+        value: parseInt(chip.dataset.value, 10),
+        startX: t.clientX,
+        startY: t.clientY,
+        dragging: false,
+        clone: null
+      };
+    }, { passive: true });
+  });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!touch) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touch.startX;
+    const dy = t.clientY - touch.startY;
+
+    if (!touch.dragging) {
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+      touch.dragging = true;
+      const rect = touch.chip.getBoundingClientRect();
+      const clone = touch.chip.cloneNode(true);
+      clone.className = 'drag-clone ' + touch.chip.className.replace('selected', '');
+      clone.style.cssText =
+        `width:${rect.width}px;height:${rect.height}px;` +
+        `left:${t.clientX - rect.width / 2}px;top:${t.clientY - rect.height / 2}px;`;
+      document.body.appendChild(clone);
+      touch.clone = clone;
+    }
+
+    if (touch.dragging) {
+      e.preventDefault();
+      const w = touch.clone.offsetWidth;
+      const h = touch.clone.offsetHeight;
+      touch.clone.style.left = (t.clientX - w / 2) + 'px';
+      touch.clone.style.top  = (t.clientY - h / 2) + 'px';
+      dropTargets.forEach(target => {
+        const tr = target.getBoundingClientRect();
+        const over = t.clientX >= tr.left && t.clientX <= tr.right &&
+                     t.clientY >= tr.top  && t.clientY <= tr.bottom;
+        target.classList.toggle('drag-over', over);
+      });
+    }
+  }, { passive: false });
+
+  function endTouchDrag(e) {
+    if (!touch) return;
+    if (touch.dragging) {
+      const t = e.changedTouches[0];
+      dropTargets.forEach(target => {
+        target.classList.remove('drag-over');
+        const tr = target.getBoundingClientRect();
+        if (t.clientX >= tr.left && t.clientX <= tr.right &&
+            t.clientY >= tr.top  && t.clientY <= tr.bottom) {
+          applyChipToBet(target.dataset.bet, touch.value);
+        }
+      });
+      touch.clone.remove();
+    }
+    touch = null;
+  }
+
+  document.addEventListener('touchend',    endTouchDrag);
+  document.addEventListener('touchcancel', () => {
+    if (touch) {
+      if (touch.clone) touch.clone.remove();
+      dropTargets.forEach(t => t.classList.remove('drag-over'));
+      touch = null;
+    }
+  });
+}
+
+function applyChipToBet(betType, value) {
+  // Only allow during the betting phase
+  if (document.getElementById('actions-betting').classList.contains('hidden')) return;
+  if (betType === 'ante') {
+    anteAmount += value;
+  } else if (betType === 'trips') {
+    tripsAmount += value;
+  }
+  updateBetDisplays();
+  animateBetCircle(betType === 'ante' ? 'circle-ante' : 'circle-trips');
+  if (betType === 'ante') animateBetCircle('circle-blind');
+}
+
+function animateBetCircle(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('circle-pulse');
+  void el.offsetWidth; // trigger reflow to restart animation
+  el.classList.add('circle-pulse');
+  setTimeout(() => el.classList.remove('circle-pulse'), CIRCLE_PULSE_DURATION);
 }
 
 // ─── Modals ───────────────────────────────────────────────────────────────────

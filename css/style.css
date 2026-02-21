@@ -8,19 +8,26 @@
   --wood: linear-gradient(135deg, #5c3a1e 0%, #8b5e3c 40%, #6b4423 70%, #4a2c12 100%);
   --gold: #ffd700;
   --gold-dark: #b8a000;
-  --card-w: 70px;
-  --card-h: 98px;
-  --radius-card: 8px;
+  --card-w: 54px;
+  --card-h: 76px;
+  --radius-card: 7px;
   font-size: 14px;
 }
 
 html, body {
   height: 100%;
+  height: 100dvh;
   background: #0a1a0a;
   color: #e0e0e0;
   font-family: Arial, Helvetica, sans-serif;
   overscroll-behavior: none;
   overflow-x: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* ─── Top Bar ──────────────────────────────────────────────────────────────── */
@@ -85,9 +92,12 @@ html, body {
 
 /* ─── Table ───────────────────────────────────────────────────────────────── */
 .table-wrapper {
-  padding: 8px;
+  flex: 1;
+  min-height: 0;
+  padding: 4px 6px;
   display: flex;
   justify-content: center;
+  align-items: stretch;
 }
 
 .table-felt {
@@ -98,19 +108,18 @@ html, body {
     radial-gradient(ellipse at 70% 70%, var(--felt-light) 0%, transparent 60%),
     radial-gradient(ellipse 90% 70% at 50% 50%, var(--felt-mid) 30%, var(--felt-dark) 100%);
   border-radius: 50% / 30%;
-  border: 12px solid;
+  border: 10px solid;
   border-image: var(--wood) 1;
-  border-radius: 60px;
+  border-radius: 52px;
   box-shadow:
-    0 0 0 4px #3d2010,
+    0 0 0 3px #3d2010,
     0 0 30px rgba(0,0,0,0.7),
     inset 0 2px 8px rgba(0,0,0,0.5);
-  padding: 12px 16px;
-  min-height: 340px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   position: relative;
 }
 
@@ -120,19 +129,32 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+}
+
+/* Player POV: subtle highlight at bottom of table */
+.player-area {
+  background: rgba(255,215,0,0.04);
+  border-radius: 12px;
+  padding: 4px 6px;
 }
 
 .area-label {
-  font-size: 11px;
+  font-size: 10px;
   color: rgba(255,215,0,0.7);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
+.player-area .area-label {
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: bold;
+}
+
 .card-row {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   justify-content: center;
   min-height: calc(var(--card-h) + 4px);
 }
@@ -140,7 +162,7 @@ html, body {
 .community-area { width: 100%; }
 .community-slots {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   justify-content: center;
 }
 .community-slot {
@@ -154,9 +176,9 @@ html, body {
 }
 
 .hand-name {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--gold);
-  height: 16px;
+  height: 14px;
   text-align: center;
   font-weight: bold;
 }
@@ -165,14 +187,14 @@ html, body {
 .bet-circles { width: 100%; }
 .bet-circle-group {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: center;
   align-items: center;
 }
 
 .bet-circle {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   border: 2px solid var(--gold-dark);
   background: rgba(0,0,0,0.4);
@@ -185,6 +207,16 @@ html, body {
   color: var(--gold);
   position: relative;
   text-align: center;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s, box-shadow 0.15s;
+  cursor: default;
+}
+
+/* Drop-target highlight during drag */
+.bet-circle[data-bet].drag-over {
+  border-color: var(--gold);
+  background: rgba(255,215,0,0.22);
+  transform: scale(1.12);
+  box-shadow: 0 0 12px rgba(255,215,0,0.5);
 }
 
 .circle-amount {
@@ -232,11 +264,11 @@ html, body {
   align-items: center;
   line-height: 1;
 }
-.card-corner.top-left { top: 3px; left: 5px; }
-.card-corner.bottom-right { bottom: 3px; right: 5px; transform: rotate(180deg); }
-.card-rank { font-size: 13px; font-weight: bold; }
-.card-suit { font-size: 11px; }
-.card-center { font-size: 26px; }
+.card-corner.top-left { top: 3px; left: 4px; }
+.card-corner.bottom-right { bottom: 3px; right: 4px; transform: rotate(180deg); }
+.card-rank { font-size: 12px; font-weight: bold; }
+.card-suit { font-size: 10px; }
+.card-center { font-size: 22px; }
 
 /* Card Back */
 .card-back {
@@ -265,6 +297,43 @@ html, body {
 
 .deal-anim {
   animation: dealCard 0.3s ease-out both;
+}
+
+/* ─── Card Reveal / Flip Animation (for dealer cards at showdown) ────────── */
+@keyframes revealCard {
+  0%   { transform: rotateY(90deg) scale(0.85); opacity: 0.4; }
+  100% { transform: rotateY(0deg)  scale(1);    opacity: 1;   }
+}
+
+.reveal-anim {
+  animation: revealCard 0.4s ease-out both;
+}
+
+/* ─── Chip Drag Styles ────────────────────────────────────────────────────── */
+.chip[draggable="true"] {
+  cursor: grab;
+  touch-action: none;
+}
+.chip[draggable="true"]:active { cursor: grabbing; }
+.chip.dragging { opacity: 0.45; transform: scale(0.95); }
+
+.drag-clone {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 50%;
+  opacity: 0.88;
+  transform: scale(1.25);
+}
+
+/* ─── Bet Circle Pulse (chip landing) ────────────────────────────────────── */
+@keyframes circlePulse {
+  0%   { box-shadow: 0 0 0 0   rgba(255,215,0,0.8); transform: scale(1); }
+  40%  { box-shadow: 0 0 0 8px rgba(255,215,0,0.25); transform: scale(1.1); }
+  100% { box-shadow: 0 0 0 0   rgba(255,215,0,0);    transform: scale(1); }
+}
+.circle-pulse {
+  animation: circlePulse 0.4s ease-out;
 }
 
 /* ─── Result Overlay ──────────────────────────────────────────────────────── */
@@ -315,9 +384,11 @@ html, body {
 
 /* ─── Actions Panel ───────────────────────────────────────────────────────── */
 .actions-panel {
-  padding: 8px 10px 16px;
+  flex-shrink: 0;
+  padding: 4px 8px 10px;
   max-width: 600px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .action-group { width: 100%; }
@@ -357,10 +428,10 @@ html, body {
 .btn-primary {
   display: block;
   width: 100%;
-  padding: 14px;
+  padding: 12px;
   border-radius: 12px;
   border: none;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: bold;
   cursor: pointer;
   transition: transform 0.1s, filter 0.1s;
@@ -375,13 +446,13 @@ html, body {
   display: flex;
   gap: 6px;
   justify-content: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   flex-wrap: wrap;
 }
 
 .chip {
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 3px solid rgba(255,255,255,0.4);
   font-size: 11px;
@@ -389,6 +460,8 @@ html, body {
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.1s;
   box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+  user-select: none;
+  -webkit-user-select: none;
 }
 .chip:active { transform: scale(0.94); }
 .chip.selected {
@@ -406,36 +479,36 @@ html, body {
 .bet-inputs {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 8px;
+  gap: 4px;
+  margin-bottom: 6px;
 }
 
 .bet-input-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   justify-content: center;
 }
 
-.bet-label { font-size: 12px; color: #aaa; min-width: 90px; }
-.bet-label-note { font-size: 10px; color: #666; }
+.bet-label { font-size: 11px; color: #aaa; min-width: 84px; }
+.bet-label-note { font-size: 10px; color: #555; }
 
 .bet-value {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: bold;
   color: var(--gold);
-  min-width: 50px;
+  min-width: 46px;
   text-align: center;
 }
 
 .btn-adjust {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 1px solid #555;
   background: #333;
   color: #eee;
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1;
   cursor: pointer;
   transition: background 0.1s;
@@ -449,7 +522,7 @@ html, body {
   justify-content: center;
 }
 .bet-total {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
   color: var(--gold);
 }
@@ -552,8 +625,15 @@ html, body {
     --card-w: 80px;
     --card-h: 112px;
   }
+  body { overflow: auto; height: auto; }
+  .table-wrapper { padding: 8px; }
+  .table-felt { padding: 14px 18px; gap: 10px; }
   .game-title { font-size: 20px; }
-  .table-felt { min-height: 400px; }
   .btn-action { padding: 14px 26px; font-size: 16px; }
   .chip { width: 52px; height: 52px; font-size: 12px; }
+  .card-rank { font-size: 14px; }
+  .card-suit { font-size: 12px; }
+  .card-center { font-size: 28px; }
+  .hand-name { font-size: 12px; height: 16px; }
+  .actions-panel { padding: 8px 10px 16px; }
 }
