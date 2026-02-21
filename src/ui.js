@@ -87,6 +87,7 @@ export function updateChipCountDisplay() {
 }
 
 function updateStackDisplay() {
+  // Targets a separate element to avoid overwriting the card game's #stack-display
   const el = document.getElementById('scene-stack-display');
   if (el) el.textContent = `$${_stack.toLocaleString()}`;
 }
