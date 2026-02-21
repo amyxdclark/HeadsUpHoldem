@@ -79,6 +79,7 @@ function setupActionButtons() {
   document.getElementById('btn-check').addEventListener('click', handleCheck);
   document.getElementById('btn-check-flop').addEventListener('click', handleCheck);
   document.getElementById('btn-fold').addEventListener('click', handleFold);
+  document.getElementById('btn-fold-river').addEventListener('click', handleFold);
   document.getElementById('btn-newgame').addEventListener('click', handleNewGame);
   document.getElementById('btn-advice').addEventListener('click', toggleAdvice);
 }
