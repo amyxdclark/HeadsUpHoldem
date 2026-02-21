@@ -87,7 +87,7 @@ export function updateChipCountDisplay() {
 }
 
 function updateStackDisplay() {
-  const el = document.getElementById('stack-display');
+  const el = document.getElementById('scene-stack-display');
   if (el) el.textContent = `$${_stack.toLocaleString()}`;
 }
 
