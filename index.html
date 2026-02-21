@@ -61,9 +61,9 @@
     <!-- Bet Circles -->
     <section class="bet-circles">
       <div class="bet-circle-group">
-        <div class="bet-circle" id="circle-trips"><span class="circle-amount"></span><span class="circle-label">Trips+</span></div>
-        <div class="bet-circle" id="circle-ante"><span class="circle-amount"></span><span class="circle-label">Ante</span></div>
-        <div class="bet-circle" id="circle-blind"><span class="circle-amount"></span><span class="circle-label">Blind</span></div>
+        <div class="bet-circle" id="circle-trips" data-bet="trips"><span class="circle-amount"></span><span class="circle-label">Trips+</span></div>
+        <div class="bet-circle" id="circle-ante"  data-bet="ante"><span class="circle-amount"></span><span class="circle-label">Ante</span></div>
+        <div class="bet-circle" id="circle-blind" data-bet="ante"><span class="circle-amount"></span><span class="circle-label">Blind</span></div>
         <div class="bet-circle" id="circle-play"><span class="circle-amount"></span><span class="circle-label">Play</span></div>
       </div>
     </section>
@@ -92,11 +92,11 @@
   <!-- Betting Phase -->
   <div id="actions-betting" class="action-group">
     <div class="chip-selector">
-      <button class="chip chip-1"  data-value="1">$1</button>
-      <button class="chip chip-5 selected" data-value="5">$5</button>
-      <button class="chip chip-25" data-value="25">$25</button>
-      <button class="chip chip-100" data-value="100">$100</button>
-      <button class="chip chip-500" data-value="500">$500</button>
+      <button class="chip chip-1"  data-value="1"   draggable="true">$1</button>
+      <button class="chip chip-5 selected" data-value="5"   draggable="true">$5</button>
+      <button class="chip chip-25" data-value="25"  draggable="true">$25</button>
+      <button class="chip chip-100" data-value="100" draggable="true">$100</button>
+      <button class="chip chip-500" data-value="500" draggable="true">$500</button>
     </div>
 
     <div class="bet-inputs">
