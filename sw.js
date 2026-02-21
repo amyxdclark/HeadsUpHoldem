@@ -32,7 +32,7 @@ self.addEventListener('fetch', event => {
     caches.match(event.request).then(cached => {
       if (cached) return cached;
       return fetch(event.request).catch(() =>
-        new Response('Offline - resource unavailable', { status: 503, statusText: 'Service Unavailable' })
+        new Response('Unable to load resource while offline. Please reload the app once you have a connection.', { status: 503, statusText: 'Service Unavailable' })
       );
     })
   );

@@ -237,7 +237,7 @@ class HeadsUpGame {
       case 8: return this.blind * 50;  // Straight Flush 50:1
       case 7: return this.blind * 10;  // Four of a Kind 10:1
       case 6: return this.blind * 3;   // Full House 3:1
-      case 5: return Math.floor(this.blind * 1.5); // Flush 3:2
+      case 5: return Math.floor(this.blind * 1.5); // Flush 3:2 (round down per casino standard)
       case 4: return this.blind * 1;   // Straight 1:1
       default: return 0;               // Push (hand < straight)
     }

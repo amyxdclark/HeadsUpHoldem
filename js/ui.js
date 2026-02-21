@@ -66,6 +66,7 @@ function setupActionButtons() {
   document.getElementById('btn-bet2').addEventListener('click', () => handleBet(2));
   document.getElementById('btn-bet1').addEventListener('click', () => handleBet(1));
   document.getElementById('btn-check').addEventListener('click', handleCheck);
+  document.getElementById('btn-check-flop').addEventListener('click', handleCheck);
   document.getElementById('btn-fold').addEventListener('click', handleFold);
   document.getElementById('btn-newgame').addEventListener('click', handleNewGame);
   document.getElementById('btn-advice').addEventListener('click', toggleAdvice);
@@ -208,19 +209,19 @@ function renderCommunityCards() {
 }
 
 function renderBetCircles() {
-  document.getElementById('circle-ante').textContent = '$' + game.ante;
-  document.getElementById('circle-blind').textContent = '$' + game.blind;
-  document.getElementById('circle-trips').textContent = game.tripsBet > 0 ? '$' + game.tripsBet : '';
-  document.getElementById('circle-play').textContent = '';
+  document.querySelector('#circle-ante .circle-amount').textContent = '$' + game.ante;
+  document.querySelector('#circle-blind .circle-amount').textContent = '$' + game.blind;
+  document.querySelector('#circle-trips .circle-amount').textContent = game.tripsBet > 0 ? '$' + game.tripsBet : '';
+  document.querySelector('#circle-play .circle-amount').textContent = '';
 }
 
 function updatePlayCircle() {
-  document.getElementById('circle-play').textContent = game.playBet > 0 ? '$' + game.playBet : '';
+  document.querySelector('#circle-play .circle-amount').textContent = game.playBet > 0 ? '$' + game.playBet : '';
 }
 
 function clearBetCircles() {
   ['circle-ante', 'circle-blind', 'circle-trips', 'circle-play'].forEach(id => {
-    document.getElementById(id).textContent = '';
+    document.querySelector('#' + id + ' .circle-amount').textContent = '';
   });
 }
 
@@ -431,7 +432,7 @@ function setupModals() {
   });
   document.querySelectorAll('.modal-close').forEach(btn => {
     btn.addEventListener('click', () => {
-      btn.closest('.modal').classList.add('hidden');
+      btn.closest('.modal-overlay').classList.add('hidden');
     });
   });
   document.querySelectorAll('.modal-overlay').forEach(overlay => {

@@ -156,7 +156,7 @@ function hasOESDrawWithHoleCard(playerCards, communityCards) {
   // Check for 4 consecutive values; open-ended = completable on both ends
   for (let i = 0; i <= vals.length - 4; i++) {
     const seq = vals.slice(i, i + 4);
-    if (seq[3] - seq[0] === 3 && seq[3] < 14) { // exclude sequences ending at K (J-Q-K-A): only a T completes it, making it one-sided (not truly open-ended)
+    if (seq[3] - seq[0] === 3 && seq[3] < 14) { // exclude sequences ending at A (e.g. J-Q-K-A is not truly open-ended)
       // Check hole card is part of this sequence
       for (const v of seq) {
         if (holeVals.has(v)) return true;
