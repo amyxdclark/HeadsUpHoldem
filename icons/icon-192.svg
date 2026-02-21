@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="36" fill="#1a4a1a"/>
+  <rect width="192" height="192" rx="36" fill="url(#felt)" opacity="0.6"/>
+  <defs>
+    <radialGradient id="felt" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2d7a2d"/>
+      <stop offset="100%" stop-color="#0d3d0d"/>
+    </radialGradient>
+  </defs>
+  <!-- Spade symbol -->
+  <path d="M96 36 C96 36 60 68 60 90 C60 106 74 114 86 110 C82 122 76 128 68 130 L124 130 C116 128 110 122 106 110 C118 114 132 106 132 90 C132 68 96 36 96 36Z" fill="white"/>
+  <!-- HU text -->
+  <text x="96" y="160" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#ffd700" text-anchor="middle">HU</text>
+</svg>
