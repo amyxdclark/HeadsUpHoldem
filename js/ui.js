@@ -219,7 +219,7 @@ function updatePlayCircle() {
 }
 
 function clearBetCircles() {
-  ['circle-ante','circle-blind','circle-trips','circle-play'].forEach(id => {
+  ['circle-ante', 'circle-blind', 'circle-trips', 'circle-play'].forEach(id => {
     document.getElementById(id).textContent = '';
   });
 }
