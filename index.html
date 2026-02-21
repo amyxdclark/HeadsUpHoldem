@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Heads Up Hold'em</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a4a1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="HU Hold'em">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Flash Message -->
+<div id="flash-message" class="flash-message hidden"></div>
+
+<!-- Top Bar -->
+<header class="top-bar">
+  <div class="stack-area">
+    <span class="label">Stack</span>
+    <span id="stack-display" class="stack-value">$1000</span>
+  </div>
+  <h1 class="game-title">Heads Up Hold'em</h1>
+  <div class="header-buttons">
+    <button id="btn-advice" class="btn-icon" title="Advice">💡</button>
+    <button id="btn-help" class="btn-icon" title="Help">❓</button>
+    <button id="btn-paytable" class="btn-icon" title="Pay Table">📊</button>
+  </div>
+</header>
+
+<!-- Advice Panel -->
+<div id="advice-panel" class="advice-panel hidden">
+  <span id="advice-text" class="advice-text">Select a chip and place your bets to begin.</span>
+</div>
+
+<!-- Main Table -->
+<main class="table-wrapper">
+  <div class="table-felt">
+
+    <!-- Dealer Area -->
+    <section class="dealer-area">
+      <div class="area-label">Dealer</div>
+      <div id="dealer-cards" class="card-row"></div>
+      <div id="dealer-hand-name" class="hand-name"></div>
+    </section>
+
+    <!-- Community Cards -->
+    <section class="community-area">
+      <div class="community-slots">
+        <div class="community-slot" data-index="0"></div>
+        <div class="community-slot" data-index="1"></div>
+        <div class="community-slot" data-index="2"></div>
+        <div class="community-slot" data-index="3"></div>
+        <div class="community-slot" data-index="4"></div>
+      </div>
+    </section>
+
+    <!-- Bet Circles -->
+    <section class="bet-circles">
+      <div class="bet-circle-group">
+        <div class="bet-circle" id="circle-trips"><span class="circle-label">Trips+</span></div>
+        <div class="bet-circle" id="circle-ante"><span class="circle-label">Ante</span></div>
+        <div class="bet-circle" id="circle-blind"><span class="circle-label">Blind</span></div>
+        <div class="bet-circle" id="circle-play"><span class="circle-label">Play</span></div>
+      </div>
+    </section>
+
+    <!-- Player Area -->
+    <section class="player-area">
+      <div id="player-hand-name" class="hand-name"></div>
+      <div id="player-cards" class="card-row"></div>
+      <div class="area-label">Your Hand</div>
+    </section>
+
+  </div><!-- end table-felt -->
+</main>
+
+<!-- Result Overlay -->
+<div id="result-overlay" class="result-overlay hidden">
+  <div class="result-box">
+    <div id="result-message" class="result-message"></div>
+    <div id="result-payouts" class="result-payouts"></div>
+  </div>
+</div>
+
+<!-- Action Panels -->
+<section class="actions-panel">
+
+  <!-- Betting Phase -->
+  <div id="actions-betting" class="action-group">
+    <div class="chip-selector">
+      <button class="chip chip-1"  data-value="1">$1</button>
+      <button class="chip chip-5 selected" data-value="5">$5</button>
+      <button class="chip chip-25" data-value="25">$25</button>
+      <button class="chip chip-100" data-value="100">$100</button>
+      <button class="chip chip-500" data-value="500">$500</button>
+    </div>
+
+    <div class="bet-inputs">
+      <div class="bet-input-row">
+        <span class="bet-label">Ante / Blind</span>
+        <button id="btn-ante-sub" class="btn-adjust">−</button>
+        <span id="ante-display" class="bet-value">$5</span>
+        <button id="btn-ante-add" class="btn-adjust">+</button>
+        <span class="bet-label-note">(Blind = Ante)</span>
+      </div>
+      <div class="bet-input-row">
+        <span class="bet-label">Trips+ Side Bet</span>
+        <button id="btn-trips-sub" class="btn-adjust">−</button>
+        <span id="trips-display" class="bet-value">-</span>
+        <button id="btn-trips-add" class="btn-adjust">+</button>
+        <span class="bet-label-note">optional</span>
+      </div>
+      <div class="bet-total-row">
+        <span class="bet-label">Total Bet:</span>
+        <span id="total-display" class="bet-total">$10</span>
+      </div>
+    </div>
+
+    <div class="bet-info-area">
+      <span class="label">Ante:</span><span id="blind-display" class="chip-display">$5</span>
+    </div>
+
+    <button id="btn-deal" class="btn-primary btn-deal">Deal Cards</button>
+  </div>
+
+  <!-- Pre-flop Phase -->
+  <div id="actions-preflop" class="action-group hidden">
+    <div class="phase-label">Pre-Flop — Bet or Check</div>
+    <div class="action-buttons">
+      <button id="btn-bet4" class="btn-action btn-bet">Bet 4x</button>
+      <button id="btn-bet3" class="btn-action btn-bet">Bet 3x</button>
+      <button id="btn-check" class="btn-action btn-check">Check</button>
+    </div>
+  </div>
+
+  <!-- Flop Phase -->
+  <div id="actions-flop" class="action-group hidden">
+    <div class="phase-label">Flop — Bet or Check</div>
+    <div class="action-buttons">
+      <button id="btn-bet2" class="btn-action btn-bet">Bet 2x</button>
+      <button id="btn-check" class="btn-action btn-check">Check</button>
+    </div>
+  </div>
+
+  <!-- River Phase -->
+  <div id="actions-river" class="action-group hidden">
+    <div class="phase-label">Turn &amp; River — Bet or Fold</div>
+    <div class="action-buttons">
+      <button id="btn-bet1" class="btn-action btn-bet">Bet 1x</button>
+      <button id="btn-fold" class="btn-action btn-fold">Fold</button>
+    </div>
+  </div>
+
+  <!-- Done Phase -->
+  <div id="actions-done" class="action-group hidden">
+    <button id="btn-newgame" class="btn-primary btn-newgame">New Game</button>
+  </div>
+
+</section>
+
+<!-- Help Modal -->
+<div id="modal-help" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close">✕</button>
+    <h2>How to Play</h2>
+    <ol>
+      <li>Place your <strong>Ante</strong> bet (Blind = Ante automatically). Optional <strong>Trips+</strong> side bet.</li>
+      <li>Click <strong>Deal Cards</strong>. You see your 2 hole cards.</li>
+      <li><strong>Pre-flop:</strong> Bet <strong>4x</strong> or <strong>3x</strong> your Ante as the Play bet, or Check.</li>
+      <li><strong>Flop (3 cards):</strong> If you haven't bet, Bet <strong>2x</strong> or Check.</li>
+      <li><strong>Turn &amp; River (2 more cards):</strong> If you haven't bet, Bet <strong>1x</strong> or Fold.</li>
+      <li><strong>Showdown:</strong> Dealer reveals cards. Dealer needs a pair to qualify.</li>
+    </ol>
+    <h3>Payouts (if you win)</h3>
+    <ul>
+      <li><strong>Ante:</strong> 1:1 (push if dealer doesn't qualify)</li>
+      <li><strong>Blind:</strong> See pay table (push for pairs/trips/straights when undealt community)</li>
+      <li><strong>Play:</strong> Always 1:1</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Pay Table Modal -->
+<div id="modal-paytable" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close">✕</button>
+    <h2>Pay Tables</h2>
+    <h3>Blind Bet</h3>
+    <table class="pay-table">
+      <tr><td>Royal Flush</td><td>500:1</td></tr>
+      <tr><td>Straight Flush</td><td>50:1</td></tr>
+      <tr><td>Four of a Kind</td><td>10:1</td></tr>
+      <tr><td>Full House</td><td>3:1</td></tr>
+      <tr><td>Flush</td><td>3:2</td></tr>
+      <tr><td>Straight</td><td>1:1</td></tr>
+      <tr><td>All other wins</td><td>Push</td></tr>
+    </table>
+    <h3>Trips+ Side Bet</h3>
+    <table class="pay-table">
+      <tr><td>Royal Flush</td><td>50:1</td></tr>
+      <tr><td>Straight Flush</td><td>40:1</td></tr>
+      <tr><td>Four of a Kind</td><td>30:1</td></tr>
+      <tr><td>Full House</td><td>9:1</td></tr>
+      <tr><td>Flush</td><td>7:1</td></tr>
+      <tr><td>Straight</td><td>4:1</td></tr>
+      <tr><td>Three of a Kind</td><td>3:1</td></tr>
+      <tr><td>All others</td><td>Lose</td></tr>
+    </table>
+  </div>
+</div>
+
+<script src="js/game.js"></script>
+<script src="js/advice.js"></script>
+<script src="js/ui.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+  }
+</script>
+</body>
+</html>
