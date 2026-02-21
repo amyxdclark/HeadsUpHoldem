@@ -3,144 +3,231 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Heads Up Hold'em — 3D Table</title>
+  <title>Heads Up Hold'em</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#1a1a2e">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: 100%; height: 100%;
-      overflow: hidden;
-      background: #0a0a12;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      color: #e8d5a3;
-    }
-    #canvas-container {
-      position: fixed; inset: 0;
-    }
-    #canvas-container canvas {
-      display: block; width: 100% !important; height: 100% !important;
-    }
-    /* HUD overlay */
-    #hud {
-      position: fixed; inset: 0; pointer-events: none;
-      display: flex; flex-direction: column;
-    }
-    /* Top bar */
-    #top-bar {
-      pointer-events: auto;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 16px;
-      background: linear-gradient(to bottom, rgba(10,10,20,0.85), transparent);
-    }
-    #top-bar h1 {
-      font-size: 1.1rem; font-weight: 700;
-      text-shadow: 0 0 8px rgba(200,170,80,0.8);
-      color: #e8d5a3; letter-spacing: 1px;
-    }
-    #stack-display {
-      font-size: 1.1rem; font-weight: 700;
-      color: #f0d060; text-shadow: 0 0 6px rgba(240,210,80,0.6);
-    }
-    /* Bottom bar */
-    #bottom-bar {
-      pointer-events: auto;
-      margin-top: auto;
-      padding: 10px 16px 16px;
-      background: linear-gradient(to top, rgba(10,10,20,0.92), transparent);
-      display: flex; align-items: flex-end; justify-content: space-between; gap: 8px;
-    }
-    .btn-group { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-    .btn {
-      padding: 7px 13px; border: none; border-radius: 6px; cursor: pointer;
-      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.5px;
-      transition: transform 0.1s, box-shadow 0.1s;
-    }
-    .btn:active { transform: scale(0.95); }
-    .btn-green  { background: #2a6e3a; color: #d0ffd8; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-    .btn-green:hover  { background: #348048; }
-    .btn-red    { background: #7a1f1f; color: #ffd8d8; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-    .btn-red:hover    { background: #8e2525; }
-    .btn-blue   { background: #1a3a6e; color: #d0e8ff; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-    .btn-blue:hover   { background: #254a8a; }
-    .btn-gold   { background: #7a5c10; color: #fff0b0; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-    .btn-gold:hover   { background: #956e14; }
-    /* Toggle */
-    .toggle-wrap { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; }
-    .toggle-wrap label { cursor: pointer; color: #b8a880; }
-    .toggle {
-      appearance: none; -webkit-appearance: none;
-      width: 36px; height: 18px; background: #333; border-radius: 9px;
-      position: relative; cursor: pointer; transition: background 0.2s;
-    }
-    .toggle:checked { background: #2a8050; }
-    .toggle::after {
-      content: ''; position: absolute; top: 2px; left: 2px;
-      width: 14px; height: 14px; border-radius: 50%; background: #eee;
-      transition: left 0.2s;
-    }
-    .toggle:checked::after { left: 20px; }
-    /* Chip denomination buttons */
-    .denom-btn {
-      width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3);
-      cursor: pointer; font-size: 0.6rem; font-weight: 800;
-      display: flex; align-items: center; justify-content: center;
-      transition: transform 0.1s, border-color 0.1s;
-    }
-    .denom-btn:hover  { transform: scale(1.1); border-color: #e8d5a3; }
-    .denom-btn.active { border-color: #f0d060; box-shadow: 0 0 8px #f0d060; }
-    /* Tooltip */
-    #tooltip {
-      position: fixed; bottom: 80px; left: 50%;
-      transform: translateX(-50%);
-      background: rgba(10,10,20,0.82); color: #ccc;
-      font-size: 0.72rem; padding: 4px 10px; border-radius: 4px;
-      pointer-events: none; opacity: 0; transition: opacity 0.3s;
-    }
-    #tooltip.show { opacity: 1; }
-  </style>
+  <meta name="theme-color" content="#0a1a0a">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div id="canvas-container"></div>
-
-<div id="hud">
-  <!-- Top bar -->
-  <div id="top-bar">
-    <div>
-      <span style="font-size:0.75rem;color:#888;">STACK</span><br>
-      <span id="stack-display">$1,000</span>
+  <!-- ── Top Bar ──────────────────────────────────────────────────────────── -->
+  <div class="top-bar">
+    <div class="stack-area">
+      <span class="label">STACK</span>
+      <span class="stack-value" id="stack-display">$1000</span>
     </div>
-    <h1>Heads Up Hold'em</h1>
-    <div style="text-align:right;">
-      <span id="chip-count-display" style="font-size:0.75rem;color:#888;">0 chips</span>
+    <span class="game-title">Heads Up Hold'em</span>
+    <div class="header-buttons">
+      <button class="btn-icon" id="btn-advice" title="Advice">💡</button>
+      <button class="btn-icon" id="btn-paytable" title="Pay Table">📊</button>
+      <button class="btn-icon" id="btn-help" title="How to Play">❓</button>
+    </div>
+  </div>
+
+  <!-- ── Advice Panel ─────────────────────────────────────────────────────── -->
+  <div class="advice-panel hidden" id="advice-panel">
+    <span class="advice-text" id="advice-text"></span>
+  </div>
+
+  <!-- ── Table ────────────────────────────────────────────────────────────── -->
+  <div class="table-wrapper">
+    <div class="table-felt">
+
+      <!-- Dealer -->
+      <div class="dealer-area">
+        <div class="area-label">Dealer</div>
+        <div class="card-row" id="dealer-cards"></div>
+        <div class="hand-name" id="dealer-hand-name"></div>
+      </div>
+
+      <!-- Community Cards -->
+      <div class="community-area">
+        <div class="community-slots">
+          <div class="community-slot"></div>
+          <div class="community-slot"></div>
+          <div class="community-slot"></div>
+          <div class="community-slot"></div>
+          <div class="community-slot"></div>
+        </div>
+      </div>
+
+      <!-- Bet Circles -->
+      <div class="bet-circles">
+        <div class="bet-circle-group">
+          <div class="bet-circle" id="circle-ante" data-bet="ante">
+            <div class="circle-amount"></div>
+            <span class="circle-label">Ante</span>
+          </div>
+          <div class="bet-circle" id="circle-blind">
+            <div class="circle-amount"></div>
+            <span class="circle-label">Blind</span>
+          </div>
+          <div class="bet-circle" id="circle-trips" data-bet="trips">
+            <div class="circle-amount"></div>
+            <span class="circle-label">Trips+</span>
+          </div>
+          <div class="bet-circle" id="circle-play">
+            <div class="circle-amount"></div>
+            <span class="circle-label">Play</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player -->
+      <div class="player-area">
+        <div class="hand-name" id="player-hand-name"></div>
+        <div class="card-row" id="player-cards"></div>
+        <div class="area-label">You</div>
+      </div>
+
     </div>
   </div>
 
-  <!-- Spacer -->
-  <div style="flex:1;"></div>
+  <!-- ── Actions Panel ─────────────────────────────────────────────────────── -->
+  <div class="actions-panel">
 
-  <!-- Bottom bar -->
-  <div id="bottom-bar">
-    <!-- Denomination selector -->
-    <div id="denom-group" class="btn-group"></div>
-
-    <!-- Buy-in and actions -->
-    <div class="btn-group">
-      <button id="btn-buyin" class="btn btn-green">Buy In</button>
-      <button id="btn-reset" class="btn btn-red">Reset Table</button>
+    <!-- Betting phase -->
+    <div class="action-group" id="actions-betting">
+      <div class="chip-selector">
+        <div class="chip chip-1"   data-value="1"   draggable="true">$1</div>
+        <div class="chip chip-5 selected" data-value="5"   draggable="true">$5</div>
+        <div class="chip chip-25"  data-value="25"  draggable="true">$25</div>
+        <div class="chip chip-100" data-value="100" draggable="true">$100</div>
+        <div class="chip chip-500" data-value="500" draggable="true">$500</div>
+      </div>
+      <div class="bet-inputs">
+        <div class="bet-input-row">
+          <span class="bet-label">Ante + Blind:</span>
+          <button class="btn-adjust" id="btn-ante-sub">−</button>
+          <span class="bet-value" id="ante-display">$5</span>
+          <button class="btn-adjust" id="btn-ante-add">+</button>
+          <span class="bet-label-note">each</span>
+        </div>
+        <div class="bet-input-row">
+          <span class="bet-label">Blind:</span>
+          <span class="bet-value" id="blind-display">$5</span>
+          <span class="bet-label-note">(= Ante)</span>
+        </div>
+        <div class="bet-input-row">
+          <span class="bet-label">Trips+:</span>
+          <button class="btn-adjust" id="btn-trips-sub">−</button>
+          <span class="bet-value" id="trips-display">-</span>
+          <button class="btn-adjust" id="btn-trips-add">+</button>
+          <span class="bet-label-note">optional</span>
+        </div>
+        <div class="bet-total-row">
+          <span class="bet-label">Total:</span>
+          <span class="bet-total" id="total-display">$10</span>
+        </div>
+      </div>
+      <button class="btn-primary btn-deal" id="btn-deal">Deal</button>
     </div>
 
-    <!-- Stack Assist toggle -->
-    <div class="toggle-wrap">
-      <input type="checkbox" class="toggle" id="toggle-assist" checked>
-      <label for="toggle-assist">Stack Assist</label>
+    <!-- Pre-flop phase -->
+    <div class="action-group hidden" id="actions-preflop">
+      <div class="phase-label">Pre-Flop — Bet 3x or 4x, Check, or Fold</div>
+      <div class="action-buttons">
+        <button class="btn-action btn-bet"   id="btn-bet4">Bet 4x</button>
+        <button class="btn-action btn-bet"   id="btn-bet3">Bet 3x</button>
+        <button class="btn-action btn-check" id="btn-check">Check</button>
+        <button class="btn-action btn-fold"  id="btn-fold">Fold</button>
+      </div>
+    </div>
+
+    <!-- Flop phase -->
+    <div class="action-group hidden" id="actions-flop">
+      <div class="phase-label">Flop — Bet 2x or Check</div>
+      <div class="action-buttons">
+        <button class="btn-action btn-bet"   id="btn-bet2">Bet 2x</button>
+        <button class="btn-action btn-check" id="btn-check-flop">Check</button>
+      </div>
+    </div>
+
+    <!-- River phase -->
+    <div class="action-group hidden" id="actions-river">
+      <div class="phase-label">River — Bet 1x or Fold</div>
+      <div class="action-buttons">
+        <button class="btn-action btn-bet"  id="btn-bet1">Bet 1x</button>
+        <button class="btn-action btn-fold" id="btn-fold-river">Fold</button>
+      </div>
+    </div>
+
+    <!-- Done phase -->
+    <div class="action-group hidden" id="actions-done">
+      <button class="btn-primary btn-newgame" id="btn-newgame">New Hand</button>
+    </div>
+
+  </div>
+
+  <!-- ── Result Overlay ────────────────────────────────────────────────────── -->
+  <div class="result-overlay hidden" id="result-overlay">
+    <div class="result-box">
+      <div class="result-message" id="result-message"></div>
+      <div class="result-payouts" id="result-payouts"></div>
     </div>
   </div>
-</div>
 
-<div id="tooltip">Drag chips to move · Drop onto a stack to stack</div>
+  <!-- ── Flash Message ─────────────────────────────────────────────────────── -->
+  <div class="flash-message hidden" id="flash-message"></div>
 
-<script type="module" src="/src/main.js"></script>
+  <!-- ── Help Modal ────────────────────────────────────────────────────────── -->
+  <div class="modal-overlay hidden" id="modal-help">
+    <div class="modal">
+      <button class="modal-close">✕</button>
+      <h2>How to Play</h2>
+      <h3>Overview</h3>
+      <ol>
+        <li>Place an Ante bet and an optional Trips+ side bet, then click <strong>Deal</strong>.</li>
+        <li>A Blind bet equal to your Ante is placed automatically.</li>
+        <li><strong>Pre-Flop:</strong> Bet 4x or 3x on strong hands, or Check (pass).</li>
+        <li><strong>Flop:</strong> Bet 2x or Check after seeing 3 community cards.</li>
+        <li><strong>River:</strong> Bet 1x or Fold after seeing all 5 community cards.</li>
+        <li>Best 5-card poker hand wins the showdown!</li>
+      </ol>
+      <h3>Dealer Qualification</h3>
+      <ul>
+        <li>Dealer must have a <strong>pair or better</strong> to qualify.</li>
+        <li>If the dealer doesn't qualify, the Ante <strong>pushes</strong> and Play bet wins 1:1.</li>
+      </ul>
+      <h3>Blind Bonus Pays</h3>
+      <ul>
+        <li>Straight: 1:1 &nbsp;|&nbsp; Flush: 3:2 &nbsp;|&nbsp; Full House: 3:1</li>
+        <li>Four of a Kind: 10:1 &nbsp;|&nbsp; Straight Flush: 50:1 &nbsp;|&nbsp; Royal Flush: 500:1</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── Pay Table Modal ───────────────────────────────────────────────────── -->
+  <div class="modal-overlay hidden" id="modal-paytable">
+    <div class="modal">
+      <button class="modal-close">✕</button>
+      <h2>Pay Table</h2>
+      <h3>Blind Bonus</h3>
+      <table class="pay-table">
+        <tr><td>Royal Flush</td><td>500:1</td></tr>
+        <tr><td>Straight Flush</td><td>50:1</td></tr>
+        <tr><td>Four of a Kind</td><td>10:1</td></tr>
+        <tr><td>Full House</td><td>3:1</td></tr>
+        <tr><td>Flush</td><td>3:2</td></tr>
+        <tr><td>Straight</td><td>1:1</td></tr>
+        <tr><td>Other</td><td>Push</td></tr>
+      </table>
+      <h3>Trips+ Side Bet</h3>
+      <table class="pay-table">
+        <tr><td>Royal Flush</td><td>50:1</td></tr>
+        <tr><td>Straight Flush</td><td>40:1</td></tr>
+        <tr><td>Four of a Kind</td><td>30:1</td></tr>
+        <tr><td>Full House</td><td>9:1</td></tr>
+        <tr><td>Flush</td><td>7:1</td></tr>
+        <tr><td>Straight</td><td>4:1</td></tr>
+        <tr><td>Three of a Kind</td><td>3:1</td></tr>
+        <tr><td>Other</td><td>Lose</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <script src="js/game.js"></script>
+  <script src="js/advice.js"></script>
+  <script src="js/ui.js"></script>
 </body>
 </html>
