@@ -222,14 +222,15 @@ body {
 .bet-circles { width: 100%; }
 .bet-circle-group {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .bet-circle {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   border: 2px solid var(--gold-dark);
   background: rgba(0,0,0,0.4);

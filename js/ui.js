@@ -10,6 +10,7 @@ let game = null;
 let selectedChip = 5;
 let anteAmount = 5;
 let tripsAmount = 0;
+let pocketBonusAmount = 0;
 let adviceVisible = false;
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -52,19 +53,29 @@ function setupChipButtons() {
     tripsAmount = Math.max(0, tripsAmount - selectedChip);
     updateBetDisplays();
   });
+  document.getElementById('btn-pocket-add').addEventListener('click', () => {
+    pocketBonusAmount += selectedChip;
+    updateBetDisplays();
+  });
+  document.getElementById('btn-pocket-sub').addEventListener('click', () => {
+    pocketBonusAmount = Math.max(0, pocketBonusAmount - selectedChip);
+    updateBetDisplays();
+  });
 }
 
 function updateBetDisplays() {
   document.getElementById('ante-display').textContent = '$' + anteAmount;
   document.getElementById('blind-display').textContent = '$' + anteAmount;
   document.getElementById('trips-display').textContent = tripsAmount > 0 ? '$' + tripsAmount : '-';
-  document.getElementById('total-display').textContent = '$' + (anteAmount * 2 + tripsAmount);
+  document.getElementById('pocket-display').textContent = pocketBonusAmount > 0 ? '$' + pocketBonusAmount : '-';
+  document.getElementById('total-display').textContent = '$' + (anteAmount * 2 + tripsAmount + pocketBonusAmount);
 
   // Preview pending bets on the circles during the betting phase
   if (game && game.betStage === 'idle') {
     document.querySelector('#circle-ante .circle-amount').textContent = '$' + anteAmount;
     document.querySelector('#circle-blind .circle-amount').textContent = '$' + anteAmount;
     document.querySelector('#circle-trips .circle-amount').textContent = tripsAmount > 0 ? '$' + tripsAmount : '';
+    document.querySelector('#circle-pocket .circle-amount').textContent = pocketBonusAmount > 0 ? '$' + pocketBonusAmount : '';
   }
 }
 
@@ -78,14 +89,13 @@ function setupActionButtons() {
   document.getElementById('btn-bet1').addEventListener('click', () => handleBet(1));
   document.getElementById('btn-check').addEventListener('click', handleCheck);
   document.getElementById('btn-check-flop').addEventListener('click', handleCheck);
-  document.getElementById('btn-fold').addEventListener('click', handleFold);
   document.getElementById('btn-fold-river').addEventListener('click', handleFold);
   document.getElementById('btn-newgame').addEventListener('click', handleNewGame);
   document.getElementById('btn-advice').addEventListener('click', toggleAdvice);
 }
 
 function handleDeal() {
-  const cost = anteAmount * 2 + tripsAmount;
+  const cost = anteAmount * 2 + tripsAmount + pocketBonusAmount;
   if (cost > game.playerStack) {
     showMessage('Insufficient funds!', 'lose'); return;
   }
@@ -93,7 +103,7 @@ function handleDeal() {
     showMessage('Minimum ante is $1', 'lose'); return;
   }
   try {
-    game.placeBets(anteAmount, tripsAmount);
+    game.placeBets(anteAmount, tripsAmount, pocketBonusAmount);
     game.deal();
     renderGameState();
     showPhase('preflop');
@@ -173,6 +183,7 @@ function handleNewGame() {
   hideMessage();
   anteAmount = 5;
   tripsAmount = 0;
+  pocketBonusAmount = 0;
   updateBetDisplays();
   updateStackDisplay();
   showPhase('betting');
@@ -224,6 +235,7 @@ function renderBetCircles() {
   document.querySelector('#circle-ante .circle-amount').textContent = '$' + game.ante;
   document.querySelector('#circle-blind .circle-amount').textContent = '$' + game.blind;
   document.querySelector('#circle-trips .circle-amount').textContent = game.tripsBet > 0 ? '$' + game.tripsBet : '';
+  document.querySelector('#circle-pocket .circle-amount').textContent = game.pocketBonusBet > 0 ? '$' + game.pocketBonusBet : '';
   document.querySelector('#circle-play .circle-amount').textContent = '';
 }
 
@@ -232,7 +244,7 @@ function updatePlayCircle() {
 }
 
 function clearBetCircles() {
-  ['circle-ante', 'circle-blind', 'circle-trips', 'circle-play'].forEach(id => {
+  ['circle-ante', 'circle-blind', 'circle-trips', 'circle-play', 'circle-pocket'].forEach(id => {
     document.querySelector('#' + id + ' .circle-amount').textContent = '';
   });
 }
@@ -277,6 +289,11 @@ function renderShowdown(result) {
       else lines.push(`Trips+: -$${game.tripsBet}`);
     }
 
+    if (game.pocketBonusBet > 0) {
+      if (payouts.pocketBonus > 0) lines.push(`Pocket Bonus: +$${payouts.pocketBonus}`);
+      else lines.push(`Pocket Bonus: -$${game.pocketBonusBet}`);
+    }
+
     if (game.playBet > 0) {
       if (payouts.play > 0) lines.push(`Play: +$${payouts.play}`);
       else if (payouts.play < 0) lines.push(`Play: -$${Math.abs(payouts.play)}`);
@@ -291,7 +308,17 @@ function renderShowdown(result) {
     document.getElementById('player-hand-name').textContent =
       result.playerHand ? result.playerHand.name : '';
   } else {
-    payEl.textContent = 'Lost Ante + Blind';
+    const lines = ['Lost Ante + Blind'];
+    const { payouts } = result;
+    if (game.tripsBet > 0) {
+      if (payouts.trips > 0) lines.push(`Trips+: +$${payouts.trips}`);
+      else lines.push(`Trips+: -$${game.tripsBet}`);
+    }
+    if (game.pocketBonusBet > 0) {
+      if (payouts.pocketBonus > 0) lines.push(`Pocket Bonus: +$${payouts.pocketBonus}`);
+      else lines.push(`Pocket Bonus: -$${game.pocketBonusBet}`);
+    }
+    payEl.textContent = lines.join(' | ');
     document.getElementById('dealer-hand-name').textContent = '';
     document.getElementById('player-hand-name').textContent = '';
   }
@@ -554,9 +581,12 @@ function applyChipToBet(betType, value) {
     anteAmount += value;
   } else if (betType === 'trips') {
     tripsAmount += value;
+  } else if (betType === 'pocket') {
+    pocketBonusAmount += value;
   }
   updateBetDisplays();
-  animateBetCircle(betType === 'ante' ? 'circle-ante' : 'circle-trips');
+  const circleMap = { ante: 'circle-ante', trips: 'circle-trips', pocket: 'circle-pocket' };
+  animateBetCircle(circleMap[betType] || 'circle-ante');
   if (betType === 'ante') animateBetCircle('circle-blind');
 }
 

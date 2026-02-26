@@ -10,6 +10,7 @@ class HeadsUpGame {
     this.ante = 0;
     this.blind = 0;
     this.tripsBet = 0;
+    this.pocketBonusBet = 0;
     this.playBet = 0;
     this.betStage = 'idle'; // idle | preflop | flop | river | done
     this.playerCards = [];
@@ -51,13 +52,14 @@ class HeadsUpGame {
     this.reset();
   }
 
-  placeBets(ante, trips) {
+  placeBets(ante, trips, pocketBonus) {
     if (ante < 1) throw new Error('Ante must be at least $1');
-    const total = ante * 2 + trips;
+    const total = ante * 2 + trips + (pocketBonus || 0);
     if (total > this.playerStack) throw new Error('Insufficient funds');
     this.ante = ante;
     this.blind = ante;
     this.tripsBet = trips;
+    this.pocketBonusBet = pocketBonus || 0;
     this.playerStack -= total;
     this.pot = total;
     this.saveStack();
@@ -91,20 +93,47 @@ class HeadsUpGame {
   }
 
   playerFold() {
-    // Lose ante and blind
+    // Lose ante and blind; Trips+ and Pocket Bonus still evaluate
     this.betStage = 'done';
     this.hasActed = true;
+
+    const payouts = { ante: -this.ante, blind: -this.blind, trips: 0, pocketBonus: 0, play: 0 };
+
+    // Trips+ evaluates on fold using player's cards + community cards
+    if (this.tripsBet > 0) {
+      const allCards = [...this.playerCards, ...this.communityCards];
+      if (allCards.length >= 5) {
+        const playerHand = this.evaluateBest5(allCards);
+        payouts.trips = this._tripsResult(playerHand);
+      } else {
+        payouts.trips = -this.tripsBet;
+      }
+    }
+
+    // Pocket Bonus evaluates on fold (based on hole cards only)
+    if (this.pocketBonusBet > 0) {
+      payouts.pocketBonus = this._pocketBonusResult();
+    }
+
+    // Apply Trips+ and Pocket Bonus payouts to stack
+    let stackDelta = 0;
+    if (this.tripsBet > 0 && payouts.trips > 0) {
+      stackDelta += this.tripsBet + payouts.trips;
+    }
+    if (this.pocketBonusBet > 0 && payouts.pocketBonus > 0) {
+      stackDelta += this.pocketBonusBet + payouts.pocketBonus;
+    }
+    this.playerStack += stackDelta;
+
     this.lastResult = {
       winner: 'dealer',
       playerHand: null,
       dealerHand: null,
       dealerQualified: true,
       folded: true,
-      payouts: { ante: -this.ante, blind: -this.blind, trips: this._tripsResult([]), play: 0 },
+      payouts,
       message: 'You folded. Lost Ante and Blind.'
     };
-    // Trips pays out on fold if applicable (no community cards = lose)
-    this.lastResult.payouts.trips = this.tripsBet > 0 ? -this.tripsBet : 0;
     this.saveStack();
     return this.lastResult;
   }
@@ -141,7 +170,7 @@ class HeadsUpGame {
     else if (cmp < 0) winner = 'dealer';
     else winner = 'tie';
 
-    const payouts = { ante: 0, blind: 0, trips: 0, play: 0 };
+    const payouts = { ante: 0, blind: 0, trips: 0, pocketBonus: 0, play: 0 };
 
     if (winner === 'player') {
       if (!dealerQualified) {
@@ -168,6 +197,11 @@ class HeadsUpGame {
     // Trips side bet
     if (this.tripsBet > 0) {
       payouts.trips = this._tripsResult(playerHand);
+    }
+
+    // Pocket Bonus side bet
+    if (this.pocketBonusBet > 0) {
+      payouts.pocketBonus = this._pocketBonusResult();
     }
 
     // Apply payouts to stack
@@ -200,6 +234,13 @@ class HeadsUpGame {
         stackDelta += this.tripsBet + payouts.trips;
       }
       // if trips loses, bet already deducted
+    }
+
+    // Pocket Bonus
+    if (this.pocketBonusBet > 0) {
+      if (payouts.pocketBonus > 0) {
+        stackDelta += this.pocketBonusBet + payouts.pocketBonus;
+      }
     }
 
     this.playerStack += stackDelta;
@@ -258,6 +299,33 @@ class HeadsUpGame {
       default: return -this.tripsBet;  // Lose
     }
     return this.tripsBet * multiplier;
+  }
+
+  _pocketBonusResult() {
+    if (!this.playerCards || this.playerCards.length < 2) return -this.pocketBonusBet;
+    const [c1, c2] = this.playerCards;
+    const r1 = this.rankValue(c1.rank);
+    const r2 = this.rankValue(c2.rank);
+    const hi = Math.max(r1, r2);
+    const lo = Math.min(r1, r2);
+    const suited = c1.suit === c2.suit;
+    const isPair = r1 === r2;
+
+    let multiplier = 0;
+    if (isPair && r1 === 14) {
+      multiplier = 30;                              // Pair of Aces 30:1
+    } else if (hi === 14 && lo === 13 && suited) {
+      multiplier = 25;                              // A-K Suited 25:1
+    } else if (hi === 14 && (lo === 12 || lo === 11) && suited) {
+      multiplier = 20;                              // A-Q or A-J Suited 20:1
+    } else if (hi === 14 && lo === 13 && !suited) {
+      multiplier = 15;                              // A-K Offsuit 15:1
+    } else if (isPair) {
+      multiplier = 4;                               // Any other pair 4:1
+    } else {
+      return -this.pocketBonusBet;                  // Lose
+    }
+    return this.pocketBonusBet * multiplier;
   }
 
   // ─── Hand Evaluator ──────────────────────────────────────────────────────────
